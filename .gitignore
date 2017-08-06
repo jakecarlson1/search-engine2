@@ -1,0 +1,8 @@
+# python
+*.pyc
+
+# corpus
+corpus.nosync/*
+
+# logs
+*.log

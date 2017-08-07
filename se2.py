@@ -28,8 +28,7 @@ def main(argv):
 
     orchestrator.stop()
     log.log_info("Goodbye")
-    # while True:
-    #     time.sleep(6)
+
 
 if __name__ == '__main__':
     try:
@@ -37,7 +36,6 @@ if __name__ == '__main__':
     except (KeyboardInterrupt):
         if orchestrator:
             orchestrator.stop()
-            # response = orchestrator.ask(build_request('clean_up'))
             if response['status'] == 0:
                 log.log_info("Cleanup successful")
         log.log_info("Goodbye")

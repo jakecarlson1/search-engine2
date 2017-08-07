@@ -1,3 +1,4 @@
+import traceback
 import pykka
 import xml.etree.ElementTree as ET
 
@@ -13,7 +14,7 @@ class DocumentParser(pykka.ThreadingActor):
     #     # load stop words
 
     def on_stop(self):
-        log.log_info("DocumentParser.on_stop Stopping...")
+        log.log_info("Stopping DocumentParser...")
         log.log_info("DocumentParser stopped")
 
     def on_receive(self, message):
@@ -26,15 +27,16 @@ class DocumentParser(pykka.ThreadingActor):
                 return msg.build_response(status=-1, error_msg="DocumentParser.load_file no file provided")
 
     def load_file(self, _file):
-        # with open(_file, 'r') as f:
-        #     for line in f:
-        #         log.log_info(line)
         try:
             log.log_info("DocumentParser.load_file parsing xml...")
             tree = ET.parse(_file)
             root = tree.getroot()
+            log.log_info("Loading pages...")
             for page in root.findall('page'):
-                page_id = int(page.find('revision/id').text)
+                page_id = int(page.find('id').text)
                 log.log_info("Loading page: {:}".format(page_id))
+
+            log.log_info("Done loading pages")
         except:
             log.log_error("DocumentParser.load_file error parsing xml")
+            log.log_debug(traceback.format_exc())

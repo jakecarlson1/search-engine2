@@ -1,9 +1,11 @@
+import traceback
 import pykka
 
 import logging_utils as log
 import message_utils as msg
 
 from document_parser import DocumentParser
+from index_handler import IndexHandler
 
 class Orchestrator(pykka.ThreadingActor):
 
@@ -11,18 +13,32 @@ class Orchestrator(pykka.ThreadingActor):
         super(Orchestrator, self).__init__()
 
         self.document_parser = None
+        self.index_handler = None
 
     def on_start(self):
+        log.log_info("Starting Orchestrator...")
         try:
             log.log_info("Starting DocumentParser...")
             self.document_parser = DocumentParser.start()
             log.log_info("DocumentParser started")
         except:
             log.log_error("Could not start DocumentParser")
+            log.log_debug(traceback.format_exc())
+
+        try:
+            log.log_info("Starting IndexHandler...")
+            self.index_handler = IndexHandler.start()
+            log.log_info("IndexHandler started")
+        except:
+            log.log_error("Could not start IndexHandler")
+            log.log_debug(traceback.format_exc())
+
+        log.log_info("Orchestrator started")
 
     def on_stop(self):
-        log.log_info("Orchestrator.on_stop Stopping...")
+        log.log_info("Stopping Orchestrator...")
         self.document_parser.stop()
+        self.index_handler.stop()
         log.log_info("Orchestrator stopped")
 
     def on_receive(self, message):

@@ -1,4 +1,5 @@
 import traceback
+import pickle
 import pykka
 import xml.etree.ElementTree as ET
 
@@ -9,12 +10,32 @@ class DocumentParser(pykka.ThreadingActor):
 
     def __init__(self):
         super(DocumentParser, self).__init__()
+        self.stop_words = []
 
-    # def on_start(self):
-    #     # load stop words
+    def on_start(self):
+        # load stop words
+        log.log_info("DocumentParser.on_start loading stop words")
+        try:
+            log.log_info("Reading from persistance file")
+            with open("stop-words.p", "r") as f:
+                self.stop_words = pickle.load(f)
+        except:
+            log.log_info("Could not read from persistance, rebuilding")
+            with open("stop-words.txt", 'r') as f:
+                for line in f:
+                    line = line.strip()
+                    self.stop_words.append(line)
+
+        log.log_info("Stop words loaded")
 
     def on_stop(self):
         log.log_info("Stopping DocumentParser...")
+
+        log.log_info("Writing stop words to persistance file")
+        with open("stop-words.p", "w") as f:
+            pickle.dump(self.stop_words, f)
+        log.log_info("Stop words saved")
+
         log.log_info("DocumentParser stopped")
 
     def on_receive(self, message):

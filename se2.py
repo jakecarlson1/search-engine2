@@ -25,6 +25,13 @@ def main(argv):
             log.log_error(response['error_msg'])
         else:
             log.log_info("Loaded file")
+            response = orchestrator.ask(msg.build_request(method='search', data={'word': "chemistry"}))
+            if response['status'] == 0:
+                log.log_info("Found word: {:}".format(response['data']))
+                print "Found word: {:}".format(response['data'])
+            else:
+                log.log_error(response['error_msg'])
+
 
     orchestrator.stop()
     log.log_info("Goodbye")

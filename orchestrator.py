@@ -17,13 +17,6 @@ class Orchestrator(pykka.ThreadingActor):
 
     def on_start(self):
         log.log_info("Starting Orchestrator...")
-        try:
-            log.log_info("Starting DocumentParser...")
-            self.document_parser = DocumentParser.start()
-            log.log_info("DocumentParser started")
-        except:
-            log.log_error("Could not start DocumentParser")
-            log.log_debug(traceback.format_exc())
 
         try:
             log.log_info("Starting IndexHandler...")
@@ -31,6 +24,14 @@ class Orchestrator(pykka.ThreadingActor):
             log.log_info("IndexHandler started")
         except:
             log.log_error("Could not start IndexHandler")
+            log.log_debug(traceback.format_exc())
+
+        try:
+            log.log_info("Starting DocumentParser...")
+            self.document_parser = DocumentParser.start(self.index_handler)
+            log.log_info("DocumentParser started")
+        except:
+            log.log_error("Could not start DocumentParser")
             log.log_debug(traceback.format_exc())
 
         log.log_info("Orchestrator started")
@@ -51,3 +52,23 @@ class Orchestrator(pykka.ThreadingActor):
                     return msg.build_response(status=-2, error_msg="Orchestrator.load_file failed: {:}".format(response['error_msg']))
             else:
                 return msg.build_response(status=-1, error_msg="No file provided to Orchestrator.load_file")
+        elif message['method'] == 'search':
+            if message['data']['word']:
+                word = self.stem_word(message['data']['word'])
+                if word != "":
+                    response = self.index_handler.ask(msg.build_request(method='search', data={'word': word}))
+                    if response['status'] == 0:
+                        return msg.build_response(status=0, data=response['data'])
+                    else:
+                        return msg.build_response(status=-2, error_msg="Orchestrator.search failed: {:}".format(response['error_msg']))
+
+            else:
+                return msg.build_response(status=-1, error_msg="No word provided to Orchestrator.search")
+
+    def stem_word(self, word):
+        response = self.document_parser.ask(msg.build_request(method='stem_word', data={'word': word}))
+        if response['status'] == 0:
+            return response['data']['stem']
+        else:
+            log.log_error("Orchestrator could not stem word: {:}".format(response['error_msg']))
+            return ""

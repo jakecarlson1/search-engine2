@@ -25,17 +25,23 @@ def main(argv):
             log.log_error(response['error_msg'])
         else:
             log.log_info("Loaded file")
-            response = orchestrator.ask(msg.build_request(method='search', data={'word': "chemistry"}))
+
+    is_running = True
+    while is_running:
+        query = raw_input("Search: ")
+        log.log_info("Query: {:}".format(query))
+        if query == "q" or query == "quit":
+            is_running = False
+        else:
+            response = orchestrator.ask(msg.build_request(method='search', data={'query': query}))
             if response['status'] == 0:
                 log.log_info("Found word: {:}".format(response['data']))
                 print "Found word: {:}".format(response['data'])
             else:
                 log.log_error(response['error_msg'])
 
-
     orchestrator.stop()
     log.log_info("Goodbye")
-
 
 if __name__ == '__main__':
     try:

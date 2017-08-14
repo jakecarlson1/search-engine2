@@ -15,6 +15,7 @@ class IndexHandler(pykka.ThreadingActor):
         log.log_info("IndexHandler stopped")
 
     def on_receive(self, message):
+        log.log_info("IndexHandler received message: {:}".format(message))
         if message['method'] == 'store_page':
             data = message['data']
             if data['page']:
@@ -22,13 +23,15 @@ class IndexHandler(pykka.ThreadingActor):
                 return msg.build_response(status=0)
             else:
                 return msg.build_response(status=-1, error_msg="IndexHandler.store_page no page provided")
-        if message['method'] == 'search':
+        elif message['method'] == 'search':
             data = message['data']
             if data['word']:
                 result = self.search(data['word'])
                 return msg.build_response(status=0, data=result)
             else:
                 return msg.build_response(status=-1, error_msg="IndexHandler.search no word provided")
+
+        return msg.build_response(status=-13, error_msg="No method to process message: {:}".format(message))
 
     def load_by_page(self, page):
         log.log_info("IndexHandler is adding a page...")

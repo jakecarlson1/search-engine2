@@ -17,6 +17,7 @@ class DocumentParser(pykka.ThreadingActor):
         self.index_handler = _index_handler
         self.stop_words = []
         self.word_re = re.compile('[\w]+')
+        self.unwanted_chars = ['[', ']', '{', '}', '(', ')', '|', '\\', '/', '#', ',', '.', '?', '=', '+', '-', '_', '<', '>', ':']
 
     def on_start(self):
         # load stop words
@@ -45,6 +46,7 @@ class DocumentParser(pykka.ThreadingActor):
         log.log_info("DocumentParser stopped")
 
     def on_receive(self, message):
+        log.log_info("DocumentParser received message: {:}".format(message))
         if message['method'] == 'load_file':
             data = message['data']
             if data['file']:
@@ -59,6 +61,8 @@ class DocumentParser(pykka.ThreadingActor):
                 return msg.build_response(status=0, data={'stem': stem})
             else:
                 return msg.build_response(status=-1, error_msg="DocumentParser.stem_word no word provided")
+
+        return msg.build_response(status=-13, error_msg="No method to process message: {:}".format(message))
 
     def load_file(self, _file):
         try:
@@ -80,9 +84,12 @@ class DocumentParser(pykka.ThreadingActor):
         result = {}
         page_id = int(page.find('id').text)
         page_text = page.find('revision/text').text
+        for c in page_text:
+            if c in self.unwanted_chars:
+                page_text = page_text.replace(c, ' ')
         for word in page_text.split():
             try:
-                log.log_info("Processing word: {:}".format(word))
+                # log.log_info("Processing word: {:}".format(word))
                 word = word.strip().lower()
                 if word != "" and self.word_re.match(word) and word not in self.stop_words:
                     word = self.stem_word(word)
@@ -98,4 +105,4 @@ class DocumentParser(pykka.ThreadingActor):
         return result
 
     def stem_word(self, word):
-        return self.ps.stem(word)
+        return self.ps.stem(str(word).lower())

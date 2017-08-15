@@ -35,8 +35,8 @@ def main(argv):
         else:
             response = orchestrator.ask(msg.build_request(method='search', data={'query': query}))
             if response['status'] == 0:
-                log.log_info("Found word: {:}".format(response['data']))
-                print "Found word: {:}".format(response['data'])
+                # log.log_info("Found word: {:}".format(response['data']))
+                print response['data']
             else:
                 log.log_error(response['error_msg'])
 
